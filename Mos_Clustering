@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import sys
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
-
+from PIL import Image
 #print(__doc__)
 '''
 def get_num_pointInLable(self, labels, num_clusters):
@@ -49,14 +49,15 @@ X1 = StandardScaler().fit_transform(X)
 
 # #############################################################################
 # Compute DBSCAN
-db = DBSCAN(eps=0.01, min_samples=10).fit(X1)
+db = DBSCAN(eps=0.01, min_samples=5).fit(X1)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
 core_samples_mask[db.core_sample_indices_] = True
 labels = db.labels_
 # Number of clusters in labels, ignoring noise if present.
 n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-print(n_clusters_)
+print('after 1st clustering, the num of mosq: ',n_clusters_)
 num_pointInlable = list()
+pointsIndexToDelete = list()
 for index in range(-1, n_clusters_):
     j = 0
     pointsIndex = list()
@@ -65,15 +66,21 @@ for index in range(-1, n_clusters_):
         if labels[i] == index:
             pointsIndex.append(i)
             j = j + 1
-    np.array(pointsIndex)
+    pointsIndex = np.array(pointsIndex)#the indexs of points under current cluster
     if j <1000:
         for a in pointsIndex:
-            im_at_fixed[X[a][0]][X[a][1]] = 0
+            im_at_fixed[X[a][0]][X[a][1]] = 0#delete noisy
+        pointsIndexToDelete.append(pointsIndex)
         #X = np.delete(X,pointsIndex, axis=0)
-        print('length of X: ', len(X))
+        #print('length of X: ', len(X))
     num_pointInlable.append([index, j])
-num_pointInlable = np.array(num_pointInlable)
 
+num_pointInlable = np.array(num_pointInlable)#how main point in each label [len(clusters),2]
+print('length of X before delete: ', len(X))
+pointsIndexToDelete = np.array(pointsIndexToDelete)
+#for d in range(0,len(pointsIndexToDelete)):
+#    X = np.delete(X,pointsIndexToDelete[d], axis=0)
+print('length of X after delete: ', len(X))
 '''
 print('Estimated number of clusters: %d' % n_clusters_)
 print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
@@ -89,6 +96,22 @@ print("Silhouette Coefficient: %0.3f"
 # #############################################################################
 # Plot result
 
+#second clustering
+points = list()
+for i in range(0, im_at_fixed.shape[0]):
+    for j in range(0, im_at_fixed.shape[1]):
+        if im_at_fixed[i][j] == thred:
+            points.append([i, j])
+points = np.array(points)
+print('Number of points detected: ', len(points))
+X2 = points
+X2 = StandardScaler().fit_transform(X2)
+db = DBSCAN(eps=0.05, min_samples=200).fit(X2)
+core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+core_samples_mask[db.core_sample_indices_] = True
+labels = db.labels_
+n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+print('after 2nd clustering, the num of mosq: ', n_clusters_)
 # Black removed and is used for noise instead.
 unique_labels = set(labels)
 colors = [plt.cm.Spectral(each)
@@ -100,15 +123,17 @@ for k, col in zip(unique_labels, colors):
 
     class_member_mask = (labels == k)
 
-    xy = X[class_member_mask & core_samples_mask]
+    xy = X2[class_member_mask & core_samples_mask]
     plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col),
              markeredgecolor=tuple(col), markersize=0.11)
     plt.title('Estimated number of clusters: %d' % n_clusters_)
     plt.savefig('clustering1.jpg')
-    xy = X[class_member_mask & ~core_samples_mask]
+    xy = X2[class_member_mask & ~core_samples_mask]
     plt.plot(xy[:, 0], xy[:, 1], '.', markerfacecolor=tuple(col),
              markeredgecolor='k', markersize=0.1)
 
 plt.title('Estimated number of mosquitos: %d' % n_clusters_)
 plt.savefig('clustering.jpg')
 plt.show()
+img = Image.fromarray(im_at_fixed)
+img.show()
