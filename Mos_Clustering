@@ -45,11 +45,11 @@ for i in range(0, im_at_fixed.shape[0]):
 points = np.array(points)
 print('Number of points detected: ', len(points))
 X = points
-X = StandardScaler().fit_transform(X)
+X1 = StandardScaler().fit_transform(X)
 
 # #############################################################################
 # Compute DBSCAN
-db = DBSCAN(eps=0.01, min_samples=10).fit(X)
+db = DBSCAN(eps=0.01, min_samples=10).fit(X1)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
 core_samples_mask[db.core_sample_indices_] = True
 labels = db.labels_
@@ -57,13 +57,23 @@ labels = db.labels_
 n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
 print(n_clusters_)
 num_pointInlable = list()
-for index in range(0, n_clusters_):
+for index in range(-1, n_clusters_):
     j = 0
+    pointsIndex = list()
     for i in range(0, len(labels)):
+
         if labels[i] == index:
+            pointsIndex.append(i)
             j = j + 1
+    np.array(pointsIndex)
+    if j <1000:
+        for a in pointsIndex:
+            im_at_fixed[X[a][0]][X[a][1]] = 0
+        #X = np.delete(X,pointsIndex, axis=0)
+        print('length of X: ', len(X))
     num_pointInlable.append([index, j])
 num_pointInlable = np.array(num_pointInlable)
+
 '''
 print('Estimated number of clusters: %d' % n_clusters_)
 print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
