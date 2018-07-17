@@ -1,0 +1,47 @@
+
+
+import cv2
+import os
+import numpy as np
+ROOT_Dir = os.getcwd()
+img_Dir = os.path.join(ROOT_Dir, 'images', 'mosquito.jpg')
+
+img = cv2.imread('mosquito.jpg')
+img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+retval, im_at_fixed = cv2.threshold(img_grey, 150, 255, cv2.THRESH_BINARY)
+#cv2.imshow('image', im_at_fixed)
+points = list()
+for i in range(0,im_at_fixed.shape[0]):
+    for j in range(0, im_at_fixed.shape[1]):
+        if im_at_fixed[i][j] == 0:
+            points.append([i,j])
+points = np.array(points)
+
+
+'''cv2.imshow('mosquito.jpg',im_at_fixed)
+cv2.waitKey(0)
+cv2.show()'''
+"""import matplotlib.pyplot as plt #plt 用于显示图片
+import matplotlib.image as mpimg #mpimg 用于读取图片
+import numpy as np
+lena = mpimg.imread(img_Dir) #读取和代码处于同一目录下的lena.png
+# 此时 lena 就已经是一个 np.array 了，可以对它进行任意处理
+lena.shape #(512, 512, 3)
+plt.imshow(lena) # 显示图片
+plt.axis('off') # 不显示坐标轴
+plt.show()
+
+lena_1 = lena[:,:,0]
+plt.imshow(lena_1)
+plt.show()
+
+plt.imshow(lena_1, cmap='Greys_r')
+plt.show()"""
+
+'''from PIL import  Image
+
+I = Image.open(img_Dir)
+I.show()
+L = I.convert('1')
+L.show()'''
+

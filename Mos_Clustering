@@ -1,0 +1,104 @@
+# -*- coding: utf-8 -*-
+import numpy as np
+import os
+import cv2
+import matplotlib.pyplot as plt
+import sys
+from sklearn.cluster import DBSCAN
+from sklearn.preprocessing import StandardScaler
+
+#print(__doc__)
+'''
+def get_num_pointInLable(self, labels, num_clusters):
+    num_pointInlable = list()
+    for index in range(0,num_clusters):
+        j = 0
+        for i in range(0, len(labels)):
+            if labels[i] == index:
+                j = j + 1
+        num_pointInlable.append([index,j])
+    return num_pointInlable'''
+# #############################################################################
+
+ROOT_Dir = os.getcwd()
+img_Dir = os.path.join(ROOT_Dir, 'images')
+sys.path.append(img_Dir)
+imgname1 = 'mosquito.jpg'
+imgname2 = 'crop_mos.jpg'
+imgname3 = 'mos2.jpg'
+img = cv2.imread(imgname3, cv2.IMREAD_UNCHANGED)
+#img = cv2.imread(imgname2)
+if len(img.shape) ==3:
+    img_grey = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    thred = 0
+else:
+    img_grey = img
+    thred = 255
+retval, im_at_fixed = cv2.threshold(img_grey, 150, 255, cv2.THRESH_BINARY)
+# cv2.imshow('image', im_at_fixed)
+# im_at_fixed = cv2.imread(imgname3)
+points = list()
+for i in range(0, im_at_fixed.shape[0]):
+    for j in range(0, im_at_fixed.shape[1]):
+        if im_at_fixed[i][j] == thred:
+            points.append([i, j])
+points = np.array(points)
+print('Number of points detected: ', len(points))
+X = points
+X = StandardScaler().fit_transform(X)
+
+# #############################################################################
+# Compute DBSCAN
+db = DBSCAN(eps=0.01, min_samples=10).fit(X)
+core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+core_samples_mask[db.core_sample_indices_] = True
+labels = db.labels_
+# Number of clusters in labels, ignoring noise if present.
+n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+print(n_clusters_)
+num_pointInlable = list()
+for index in range(0, n_clusters_):
+    j = 0
+    for i in range(0, len(labels)):
+        if labels[i] == index:
+            j = j + 1
+    num_pointInlable.append([index, j])
+num_pointInlable = np.array(num_pointInlable)
+'''
+print('Estimated number of clusters: %d' % n_clusters_)
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
+print("Completeness: %0.3f" % metrics.completeness_score(labels_true, labels))
+print("V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels))
+print("Adjusted Rand Index: %0.3f"
+      % metrics.adjusted_rand_score(labels_true, labels))
+print("Adjusted Mutual Information: %0.3f"
+      % metrics.adjusted_mutual_info_score(labels_true, labels))
+print("Silhouette Coefficient: %0.3f"
+      % metrics.silhouette_score(X, labels))
+'''
+# #############################################################################
+# Plot result
+
+# Black removed and is used for noise instead.
+unique_labels = set(labels)
+colors = [plt.cm.Spectral(each)
+          for each in np.linspace(0, 1, len(unique_labels))]
+for k, col in zip(unique_labels, colors):
+    if k == -1:
+        # Black used for noise.
+        col = [0, 0, 0, 1]
+
+    class_member_mask = (labels == k)
+
+    xy = X[class_member_mask & core_samples_mask]
+    plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=tuple(col),
+             markeredgecolor=tuple(col), markersize=0.11)
+    plt.title('Estimated number of clusters: %d' % n_clusters_)
+    plt.savefig('clustering1.jpg')
+    xy = X[class_member_mask & ~core_samples_mask]
+    plt.plot(xy[:, 0], xy[:, 1], '.', markerfacecolor=tuple(col),
+             markeredgecolor='k', markersize=0.1)
+
+plt.title('Estimated number of mosquitos: %d' % n_clusters_)
+plt.savefig('clustering.jpg')
+plt.show()
