@@ -8,6 +8,22 @@ from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 from PIL import Image
 #print(__doc__)
+def From2D2points(img):
+    points = list()
+    for i in range(0, img.shape[0]):
+        for j in range(0, img.shape[1]):
+            if img[i][j] != 0:
+                points.append([i, j])
+    points = np.array(points)
+    return points
+def num_pointInlable(labels):
+
+    classes = list(set(labels))
+    num_pointInlable = dict()
+    for i in range(0, len(labels)):
+        if labels[i] in classes:
+            num_pointInlable.setdefault(str(labels[i]), []).append(i)
+    return num_pointInlable
 '''
 def get_num_pointInLable(self, labels, num_clusters):
     num_pointInlable = list()
@@ -37,50 +53,34 @@ else:
 retval, im_at_fixed = cv2.threshold(img_grey, 150, 255, cv2.THRESH_BINARY)
 # cv2.imshow('image', im_at_fixed)
 # im_at_fixed = cv2.imread(imgname3)
-points = list()
-for i in range(0, im_at_fixed.shape[0]):
-    for j in range(0, im_at_fixed.shape[1]):
-        if im_at_fixed[i][j] == thred:
-            points.append([i, j])
-points = np.array(points)
+points = From2D2points(im_at_fixed)
 print('Number of points detected: ', len(points))
 X = points
 X1 = StandardScaler().fit_transform(X)
 
 # #############################################################################
-# Compute DBSCAN
-db = DBSCAN(eps=0.01, min_samples=5).fit(X1)
+# Compute 1st DBSCAN
+db = DBSCAN(eps=0.01, min_samples=1).fit(X1)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
 core_samples_mask[db.core_sample_indices_] = True
 labels = db.labels_
 # Number of clusters in labels, ignoring noise if present.
-n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-print('after 1st clustering, the num of mosq: ',n_clusters_)
-num_pointInlable = list()
-pointsIndexToDelete = list()
-for index in range(-1, n_clusters_):
-    j = 0
-    pointsIndex = list()
-    for i in range(0, len(labels)):
-
-        if labels[i] == index:
-            pointsIndex.append(i)
-            j = j + 1
-    pointsIndex = np.array(pointsIndex)#the indexs of points under current cluster
-    if j <1000:
-        for a in pointsIndex:
-            im_at_fixed[X[a][0]][X[a][1]] = 0#delete noisy
-        pointsIndexToDelete.append(pointsIndex)
-        #X = np.delete(X,pointsIndex, axis=0)
-        #print('length of X: ', len(X))
-    num_pointInlable.append([index, j])
-
-num_pointInlable = np.array(num_pointInlable)#how main point in each label [len(clusters),2]
+n_clusters_ = len(set(labels))
+print('after 1st clustering, the num of all clusterings: ',n_clusters_)
+num_pointInlable = num_pointInlable(labels)
+# delete noisy
 print('length of X before delete: ', len(X))
-pointsIndexToDelete = np.array(pointsIndexToDelete)
+for i in set(labels):
+    if len(num_pointInlable[str(i)])<1000:
+        print(i, ',deleting points: ', len(num_pointInlable[str(i)]))
+        for a in num_pointInlable[str(i)]:
+            im_at_fixed[X[a][0]][X[a][1]] = 0#delete noisy
+        #X = np.delete(X, num_pointInlable[str(i)], axis=0)#delete noisy in X...
+    #print('length of X: ', len(X))
+#print('length of X after delete: ', len(X))
 #for d in range(0,len(pointsIndexToDelete)):
 #    X = np.delete(X,pointsIndexToDelete[d], axis=0)
-print('length of X after delete: ', len(X))
+
 '''
 print('Estimated number of clusters: %d' % n_clusters_)
 print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
@@ -97,14 +97,8 @@ print("Silhouette Coefficient: %0.3f"
 # Plot result
 
 #second clustering
-points = list()
-for i in range(0, im_at_fixed.shape[0]):
-    for j in range(0, im_at_fixed.shape[1]):
-        if im_at_fixed[i][j] == thred:
-            points.append([i, j])
-points = np.array(points)
-print('Number of points detected: ', len(points))
-X2 = points
+
+X2 = From2D2points(im_at_fixed)
 X2 = StandardScaler().fit_transform(X2)
 db = DBSCAN(eps=0.05, min_samples=200).fit(X2)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
