@@ -6,7 +6,9 @@ import sys
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 from PIL import Image
-#print(__doc__)
+
+
+# print(__doc__)
 
 
 def From2D2points(img):
@@ -20,7 +22,6 @@ def From2D2points(img):
 
 
 def gt_num_pointInlable(labels):
-
     classes = list(set(labels))
     num_pointInlable = dict()
     for i in range(0, len(labels)):
@@ -29,12 +30,12 @@ def gt_num_pointInlable(labels):
     return num_pointInlable
 
 
-def showimage(img, points, pointstoshow,filename,key):
+def showimage(img, points, pointstoshow, filename, key):
     height, width = img.shape
-    img = np.zeros([height,width])
-    PointsX = points[:,0]
-    PointsY = points[:,1]
-    for i in range(0,len(pointstoshow)):
+    img = np.zeros([height, width])
+    PointsX = points[:, 0]
+    PointsY = points[:, 1]
+    for i in range(0, len(pointstoshow)):
         img[PointsX[pointstoshow[i]]][PointsY[pointstoshow[i]]] = 255
     img = Image.fromarray(img)
     img = img.convert('RGB')
@@ -42,8 +43,8 @@ def showimage(img, points, pointstoshow,filename,key):
 
 
 def dbscanFromIMG(img, eps, min_samples):
-    #input: img,eps,min_samples
-    #output: dbscan
+    # input: img,eps,min_samples
+    # output: dbscan
     if len(img.shape) == 3:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         retval, imgbin = cv2.threshold(img, 150, 255, cv2.THRESH_BINARY)
@@ -52,7 +53,8 @@ def dbscanFromIMG(img, eps, min_samples):
     X = points
     X1 = StandardScaler().fit_transform(X)
     db = DBSCAN(eps=eps, min_samples=min_samples).fit(X1)
-    return db
+    return db, points
+
 
 '''
 def showClustering(points,labels):
@@ -86,20 +88,21 @@ def showClustering(points,labels):
 '''
 dectedby2 = list()
 num_mos = 0
-for filename in os.listdir(r"./current"):  #read pics from folder one by one
-    num_mos = num_mos+1
+for filename in os.listdir(r"./current"):  # read pics from folder one by one
+    num_mos = num_mos + 1
     Ifdeletenoisy = False
-    imgpath = os.path.join('./current',filename)
+    imgpath = os.path.join('./current', filename)
     img = cv2.imread(imgpath, cv2.IMREAD_UNCHANGED)
-    db = dbscanFromIMG(img,0.5,200)                #Clustering
+    db, points = dbscanFromIMG(img, 0.5, 200)  # Clustering
+    X = points
     labels = db.labels_
     # Number of clusters in labels, ignoring noise if present.
     n_clusters_ = len(set(labels))
-    print('after 1st clustering, the num of all clusterings: ',n_clusters_)
+    print('after 1st clustering, the num of all clusterings: ', n_clusters_)
     num_pointInlable = gt_num_pointInlable(labels)
     for key in num_pointInlable.keys():
-        print('cluster: ',key,'num of points:',len(num_pointInlable[key]))
-        showimage(img, points, np.array(num_pointInlable[key]),filename,key)
+        print('cluster: ', key, 'num of points:', len(num_pointInlable[key]))
+        showimage(img, points, np.array(num_pointInlable[key]), filename, key)
     ##Covariance
     X2Cov = list()
     Y2Cov = list()
@@ -108,12 +111,12 @@ for filename in os.listdir(r"./current"):  #read pics from folder one by one
         Y2Cov.append(X[a][1])
     X2Cov = np.array(X2Cov)
     Y2Cov = np.array(Y2Cov)
-    NoisyCov = np.cov(X2Cov,Y2Cov)
-    print('Covariance:\n',NoisyCov)
-    if NoisyCov[0][0]<100 and NoisyCov[1][1]<100:
+    NoisyCov = np.cov(X2Cov, Y2Cov)
+    print('Covariance:\n', NoisyCov)
+    if NoisyCov[0][0] < 100 and NoisyCov[1][1] < 100:
         dectedby2.append(filename)
-        print(filename,':',NoisyCov)
-print(len(dectedby2)/num_mos)
+        print(filename, ':', NoisyCov)
+print(len(dectedby2) / num_mos)
 '''
 # delete noisy
 if Ifdeletenoisy:
@@ -162,7 +165,5 @@ if IfSaveFig:
     plt.savefig('clustering.jpg')
 plt.show()
 '''
-#img = Image.fromarray(imgbin)
-#img.show()
-
-
+# img = Image.fromarray(imgbin)
+# img.show()
