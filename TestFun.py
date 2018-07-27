@@ -44,7 +44,7 @@ def showimage(img, points, pointstoshow, filename, key):
 
 def dbscanFromIMG(img, eps, min_samples):
     # input: img,eps,min_samples
-    # output: dbscan
+    # output: dbscan, 2Dpoints from img
     if len(img.shape) == 3:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         retval, imgbin = cv2.threshold(img, 150, 255, cv2.THRESH_BINARY)
