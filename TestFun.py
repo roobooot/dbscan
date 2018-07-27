@@ -41,6 +41,19 @@ def showimage(img, points, pointstoshow,filename,key):
     img.save('afterclustering\\clustering' + filename + str(key) + '.jpg')
 
 
+def dbscanFromIMG(img, eps, min_samples):
+    #input: img,eps,min_samples
+    #output: dbscan
+    if len(img.shape) == 3:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        retval, imgbin = cv2.threshold(img, 150, 255, cv2.THRESH_BINARY)
+    imgbin = img
+    points = From2D2points(imgbin)
+    X = points
+    X1 = StandardScaler().fit_transform(X)
+    db = DBSCAN(eps=eps, min_samples=min_samples).fit(X1)
+    return db
+
 '''
 def showClustering(points,labels):
     unique_labels = set(labels)
@@ -73,21 +86,12 @@ def showClustering(points,labels):
 '''
 dectedby2 = list()
 num_mos = 0
-for filename in os.listdir(r"./current"):
+for filename in os.listdir(r"./current"):  #read pics from folder one by one
     num_mos = num_mos+1
     Ifdeletenoisy = False
     imgpath = os.path.join('./current',filename)
     img = cv2.imread(imgpath, cv2.IMREAD_UNCHANGED)
-    if len(img.shape) == 3:
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        retval, imgbin = cv2.threshold(img, 150, 255, cv2.THRESH_BINARY)
-    imgbin = img
-    points = From2D2points(imgbin)
-    X = points
-    X1 = StandardScaler().fit_transform(X)
-    db = DBSCAN(eps=0.5, min_samples=200).fit(X1)
-    core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
-    core_samples_mask[db.core_sample_indices_] = True
+    db = dbscanFromIMG(img,0.5,200)                #Clustering
     labels = db.labels_
     # Number of clusters in labels, ignoring noise if present.
     n_clusters_ = len(set(labels))
