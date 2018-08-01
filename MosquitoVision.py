@@ -1,3 +1,4 @@
+#-*-coding:utf-8-*-
 """
 This is the whole code for the traditional method to do the detection for mosquitoes
 
@@ -194,7 +195,7 @@ def dbscanAndCovarianceForSoloHead(HeadImg, rank):
     return dectedby2, num_pointInlable
 
 
-def JudgeNoisyPointsAfterClustering(detectedby2, points, ImgAfterClustering, rect):
+def JudgeNoisyPointsAfterClustering(detectedby2, points, ImgAfterClustering, rectlist):
     # To judge the noisy points if in the head bounding box, if so, output those points and store.
     # OUTPUT:NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = {'0': [points]
     #                                                        '1': [points]
@@ -204,9 +205,11 @@ def JudgeNoisyPointsAfterClustering(detectedby2, points, ImgAfterClustering, rec
     NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = dict()
     NoisyPointsAfterJudgeIfInHeadBBox = list()
     for mos in detectedby2:
+        mosi = mos * 2 - 1
         mos = str(mos)
         for point in ImgAfterClustering[mos]['-1']:
-            if points[point, 0] > rect[0] and points[point, 1] < rect[1]:
+            if points[point, 0] > rectlist[mosi][0] and points[point, 1] < rectlist[mosi][2] \
+                    and points[point, 0] > rectlist[mosi][1] and points[point, 0] < rectlist[mosi][3]:
                 NoisyPointsAfterJudgeIfInHeadBBox.append(point)
         NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg[mos] = NoisyPointsAfterJudgeIfInHeadBBox
     return NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg
