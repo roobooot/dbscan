@@ -2,13 +2,27 @@ import numpy as np
 import os
 import cv2
 import matplotlib.pyplot as plt
+def dbscanFromIMG(img, eps, min_samples):
+    # input: img,eps,min_samples
+    # output: dbscan, 2Dpoints from img
+    if len(img.shape) == 3:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        retval, imgbin = cv2.threshold(img, 150, 255, cv2.THRESH_BINARY)
+    imgbin = img
+    points = From2D2points(imgbin)
+    X = points
+    X1 = StandardScaler().fit_transform(X)
+    db = DBSCAN(eps=eps, min_samples=min_samples).fit(X1)
+    return db, points
 import sys
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
-from PIL import Image
 
 
 # print(__doc__)
+
+
+from PIL import Image
 
 
 def From2D2points(img):
@@ -30,7 +44,7 @@ def gt_num_pointInlable(labels):
     return num_pointInlable
 
 
-def showimage(img, points, pointstoshow, filename, key):
+def StoreSeperateImg(img, points, pointstoshow, filename, key):
     height, width = img.shape
     img = np.zeros([height, width])
     PointsX = points[:, 0]
@@ -40,20 +54,6 @@ def showimage(img, points, pointstoshow, filename, key):
     img = Image.fromarray(img)
     img = img.convert('RGB')
     img.save('afterclustering\\clustering' + filename + str(key) + '.jpg')
-
-
-def dbscanFromIMG(img, eps, min_samples):
-    # input: img,eps,min_samples
-    # output: dbscan, 2Dpoints from img
-    if len(img.shape) == 3:
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        retval, imgbin = cv2.threshold(img, 150, 255, cv2.THRESH_BINARY)
-    imgbin = img
-    points = From2D2points(imgbin)
-    X = points
-    X1 = StandardScaler().fit_transform(X)
-    db = DBSCAN(eps=eps, min_samples=min_samples).fit(X1)
-    return db, points
 
 
 '''
@@ -102,7 +102,7 @@ for filename in os.listdir(r"./current"):  # read pics from folder one by one
     num_pointInlable = gt_num_pointInlable(labels)
     for key in num_pointInlable.keys():
         print('cluster: ', key, 'num of points:', len(num_pointInlable[key]))
-        showimage(img, points, np.array(num_pointInlable[key]), filename, key)
+        StoreSeperateImg(img, points, np.array(num_pointInlable[key]), filename, key)
     ##Covariance
     X2Cov = list()
     Y2Cov = list()
