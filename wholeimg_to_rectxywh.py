@@ -166,23 +166,23 @@ for i in range(0, mosquitoesnum):
         cropimage0 = cropimage[rect0[0][0]:rect0[0][2], rect0[0][1]:rect0[0][3]]
         cropimage1 = cropimage[rect1[0][0]:rect1[0][2], rect1[0][1]:rect1[0][3]]
 
-        b = rect[i][1] + rect0[0][0]
+        b = rect[i][0] + rect0[0][0]-3
         rect0a.append(b)
-        b = rect[i][1] + rect0[0][1]
+        b = rect[i][1] + rect0[0][1]-3
         rect0a.append(b)
-        b = rect[i][3] + rect0[0][2]
+        b = rect[i][0] + rect0[0][2]-3
         rect0a.append(b)
-        b = rect[i][3] + rect0[0][3]
+        b = rect[i][1] + rect0[0][3]-3
         rect0a.append(b)
         rectlist.append(rect0a)
 
-        b = rect[i][1] + rect1[0][0]
+        b = rect[i][0] + rect1[0][0]-3
         rect1a.append(b)
-        b = rect[i][1] + rect1[0][1]
+        b = rect[i][1] + rect1[0][1]-3
         rect1a.append(b)
-        b = rect[i][3] + rect1[0][2]
+        b = rect[i][0] + rect1[0][2]-3
         rect1a.append(b)
-        b = rect[i][3] + rect1[0][3]
+        b = rect[i][1] + rect1[0][3]-3
         rect1a.append(b)
         rectlist.append(rect1a)
 
