@@ -10,6 +10,8 @@ import os
 from PIL import Image
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+from skimage import draw
 
 
 ##pre
@@ -432,6 +434,7 @@ def HoughCircles(img):
 
 # input picture and save
 imagename = "19_0313_9"
+imgColor = cv2.imread(imagename + '.jpg', cv2.IMREAD_COLOR)
 img = cv2.imread(imagename + '.jpg', cv2.IMREAD_GRAYSCALE)
 
 # grayprocess, erode using kernel
@@ -463,3 +466,12 @@ for i in range(0, mosquitoesnum):
     circles = HoughCircles(HeadimgForHough)
 
     CirclesOfAllMos[str(i)] = circles
+
+def plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg):
+
+    for mos in len(rectlist):
+        CircleCentX = CirclesOfAllMos[str(mos)][0]
+        CircleCentY = CirclesOfAllMos[str(mos)][1]
+        Radius = CirclesOfAllMos[str(mos)][2]
+        rr, cc = draw.circle_perimeter(CircleCentX, CircleCentY, Radius)
+        draw.set_color(imgColor, [rr, cc], [0, 255, 0])
