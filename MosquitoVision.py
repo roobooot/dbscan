@@ -16,101 +16,119 @@ from sklearn.preprocessing import StandardScaler
 # another connected components function:ret, markers = cv2.connectedComponents(eroded,)
 # remove the noise, input data form: the output matrix of cv2.connectedComponentsWithStats,
 # number of classes, input image
-def getRemovePoints(matrix,classes,eroded):
-    number = np.zeros(shape=[classes,1])
+def getRemovePoints(matrix, classes, eroded):
+    number = np.zeros(shape=[classes, 1])
     RemoveIndex = {}
-    m=matrix.shape[0]
-    n=matrix.shape[1]
-    rect=[]
-    b=0
-    for i in range(0,m-1):
-        for j in range(0,n-1):
+    m = matrix.shape[0]
+    n = matrix.shape[1]
+    rect = []
+    b = 0
+    for i in range(0, m - 1):
+        for j in range(0, n - 1):
             if matrix[i][j] != 0:
-                index = matrix[i][j]-1
+                index = matrix[i][j] - 1
                 number[index] += 1
-                medium = np.array([i,j])
-                RemoveIndex.setdefault(str(index),[]).append(medium)
-    for i in range (0,classes-1):
-        if number[i]<1000:
-            for j in range(0,len(RemoveIndex[str(i)])):
-                eroded[RemoveIndex[str(i)][j][0]][RemoveIndex[str(i)][j][1]] = 0 #removenoise
+                medium = np.array([i, j])
+                RemoveIndex.setdefault(str(index), []).append(medium)
+    for i in range(0, classes - 1):
+        if number[i] < 1000:
+            for j in range(0, len(RemoveIndex[str(i)])):
+                eroded[RemoveIndex[str(i)][j][0]][RemoveIndex[str(i)][j][1]] = 0  # removenoise
             del RemoveIndex[str(i)]
         else:
-            xdata=[]
-            ydata=[]
-            for j in range(0,len(RemoveIndex[str(i)])):
+            xdata = []
+            ydata = []
+            for j in range(0, len(RemoveIndex[str(i)])):
                 xdata.append(RemoveIndex[str(i)][j][0])
                 ydata.append(RemoveIndex[str(i)][j][1])
-            xmax=max(xdata)+2
-            xmin=min(xdata)-2
-            ymax=max(ydata)+2
-            ymin=min(ydata)-2
-            b+=1
-            #height=xmax-xmin+1
-            #width=ymax-ymin+1
-            rect.append([xmin,ymin,xmax,ymax])
-    return number,RemoveIndex,b,eroded,rect
+            xmax = max(xdata) + 2
+            xmin = min(xdata) - 2
+            ymax = max(ydata) + 2
+            ymin = min(ydata) - 2
+            b += 1
+            # height=xmax-xmin+1
+            # width=ymax-ymin+1
+            rect.append([xmin, ymin, xmax, ymax])
+    return number, RemoveIndex, b, eroded, rect
 
-def connectedtobeak(matrix,classes,eroded):
-    number = np.zeros(shape=[classes,1])
+
+def connectedtobeak(matrix, classes, eroded):
+    number = np.zeros(shape=[classes, 1])
     RemoveIndex = {}
-    m=matrix.shape[0]
-    n=matrix.shape[1]
-    for i in range(0,m-1):
-        for j in range(0,n-1):
+    m = matrix.shape[0]
+    n = matrix.shape[1]
+    for i in range(0, m - 1):
+        for j in range(0, n - 1):
             if matrix[i][j] != 0:
-                index = matrix[i][j]-1
+                index = matrix[i][j] - 1
                 number[index] += 1
-                medium = np.array([i,j])
-                RemoveIndex.setdefault(str(index),[]).append(medium)
-    maxnum=0
-    maxnum0=0
-    ff=0
-    ss=0
-    rect0=[]
-    rect1=[]
-    for i in range (0,classes):
-        if maxnum0<int(number[i]):
-            maxnum0=number[i]
-            ff=i
-    number[ff]=0
-    for i in range (0,classes-1):
-        if maxnum<int(number[i]):
-            maxnum=number[i]
-            ss=i
-    if classes!=1:
-        xdata0=[]
-        ydata0=[]
-        for j in range(0,len(RemoveIndex[str(ff)])):
+                medium = np.array([i, j])
+                RemoveIndex.setdefault(str(index), []).append(medium)
+    maxnum = 0
+    maxnum0 = 0
+    ff = 0
+    ss = 0
+    rect0 = []
+    rect1 = []
+    for i in range(0, classes):
+        if maxnum0 < int(number[i]):
+            maxnum0 = number[i]
+            ff = i
+    number[ff] = 0
+    for i in range(0, classes - 1):
+        if maxnum < int(number[i]):
+            maxnum = number[i]
+            ss = i
+    if classes != 1:
+        xdata0 = []
+        ydata0 = []
+        for j in range(0, len(RemoveIndex[str(ff)])):
             xdata0.append(RemoveIndex[str(ff)][j][0])
             ydata0.append(RemoveIndex[str(ff)][j][1])
-        xmax0=max(xdata0)
-        xmin0=min(xdata0)
-        ymax0=max(ydata0)
-        ymin0=min(ydata0)
-        rect0.append([xmin0,ymin0,xmax0,ymax0])
-        xdata1=[]
-        ydata1=[]
-        for j in range(0,len(RemoveIndex[str(ss)])):
+        xmax0 = max(xdata0)
+        xmin0 = min(xdata0)
+        ymax0 = max(ydata0)
+        ymin0 = min(ydata0)
+        rect0.append([xmin0, ymin0, xmax0, ymax0])
+        xdata1 = []
+        ydata1 = []
+        for j in range(0, len(RemoveIndex[str(ss)])):
             xdata1.append(RemoveIndex[str(ss)][j][0])
             ydata1.append(RemoveIndex[str(ss)][j][1])
-        xmax1=max(xdata1)
-        xmin1=min(xdata1)
-        ymax1=max(ydata1)
-        ymin1=min(ydata1)
-        rect1.append([xmin1,ymin1,xmax1,ymax1])
-    return number,RemoveIndex,eroded,rect0,rect1
+        xmax1 = max(xdata1)
+        xmin1 = min(xdata1)
+        ymax1 = max(ydata1)
+        ymin1 = min(ydata1)
+        rect1.append([xmin1, ymin1, xmax1, ymax1])
+    return number, RemoveIndex, eroded, rect0, rect1
+
 
 # Seperate every solo mosquito and store in a list
 def SeperateAndStoreInList(img, mosquitoesnum, rect, IfStore=False):
+    # OUTPUT: soloImage: [
+    # [points of 1st mos]
+    # [points of 2nd mos]
+    # ...
+    # ]----type: list
     soloImage = []
     for i in range(0, mosquitoesnum):
         cropimage = img[rect[i][0]:rect[i][2], rect[i][1]:rect[i][3]]
         soloImage.append(list(cropimage))
         if IfStore:
+            folder1 = os.getcwd() + '\\SavaImages\\CropMos'
+            # 获取此py文件路径，在此路径选创建在new_folder文件夹中的test文件夹
+            folder2 = os.path.join(folder1, 'current')
+            folder3 = os.path.join(folder1, 'history')
+
+            if not os.path.exists(folder1):
+                os.makedirs(folder1)
+            if not os.path.exists(folder2):
+                os.makedirs(folder2)
+            if not os.path.exists(folder3):
+                os.makedirs(folder3)
             cropimage = Image.fromarray(cropimage)
-            cropimage.save('current\\cropimage' + str(i) + '.jpg')
-            cropimage.save('history\\' + imagename + 'cropimage' + str(i) + '.jpg')
+            cropimage.save(folder2 + '\\cropimage' + str(i) + '.jpg')
+            cropimage.save(folder3 + '\\' + imagename + 'cropimage' + str(i) + '.jpg')
     return soloImage
 
 
@@ -138,9 +156,9 @@ def gt_num_pointInlable(labels):
     return num_pointInlable
 
 
-def StoreSeperateImg(img, points, pointstoshow, rank, key, path):
+def StoreSeperateImg(soloimgShape, points, pointstoshow, rank, key, path):
     # show the points that you'd like to show and store
-    height, width = img.shape
+    height, width = soloimgShape
     img = np.zeros([height, width])
     PointsX = points[:, 0]
     PointsY = points[:, 1]
@@ -156,8 +174,7 @@ def dbscanFromIMG(img, eps, min_samples):
     # output: dbscan, 2Dpoints from img
     if len(img.shape) == 3:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        retval, imgbin = cv2.threshold(img, 150, 255, cv2.THRESH_BINARY)
-    # imgbin = img ##...
+    imgbin = img  ##...
     points = From2D2points(imgbin)
     X = points
     X1 = StandardScaler().fit_transform(X)
@@ -174,12 +191,15 @@ def dbscanAndCovarianceForSoloMos(soloImage, mosquitoesnum):
     #
     dectedby2 = list()
     ImgAfterClustering = dict()
-    Storepath = os.path.join(os.getcwd(), 'afterclustering\\Mosquito')
-    IfPrintCovrariance = False
+    Storepath = os.path.join(os.getcwd(), 'afterclustering\\Mosquito\\')
+    IfPrintCovrariance = True
+    pointsOfAllMos = dict() # Store all the points of every solo mos in mos bounding box.
     for i in range(0, len(soloImage)):
         soloimg = soloImage[i]
         soloimg = np.array(soloimg)
+        soloimgShape = soloimg.shape
         db, points = dbscanFromIMG(soloimg, 0.5, 200)  # Clustering
+        pointsOfAllMos[str(i)] = points # 每张文字图片里点的坐标
         X = points
         labels = db.labels_
         # Number of clusters in labels, ignoring noise if present.
@@ -189,7 +209,7 @@ def dbscanAndCovarianceForSoloMos(soloImage, mosquitoesnum):
         ImgAfterClustering[str(i)] = num_pointInlable
         for key in num_pointInlable.keys():
             print('cluster: ', key, 'num of points:', len(num_pointInlable[key]))
-            StoreSeperateImg(soloimg, points, np.array(num_pointInlable[key]), i, key, Storepath)
+            StoreSeperateImg(soloimgShape, points, np.array(num_pointInlable[key]), i, key, Storepath)
         ##Covariance
         X2Cov = list()
         Y2Cov = list()
@@ -200,12 +220,12 @@ def dbscanAndCovarianceForSoloMos(soloImage, mosquitoesnum):
         Y2Cov = np.array(Y2Cov)
         NoisyCov = np.cov(X2Cov, Y2Cov)
         if IfPrintCovrariance:
-            print('Covariance:\n', NoisyCov)
-        if NoisyCov[0][0] < 100 and NoisyCov[1][1] < 100:
+            print(i, ',Covariance:\n', NoisyCov)
+        if NoisyCov[0][0] > 170 or NoisyCov[1][1] > 170:
             dectedby2.append(i)
             print(i, ': bad(detected by 2)')
-    print('the good rate is ' + str(len(dectedby2) / mosquitoesnum))
-    return dectedby2, ImgAfterClustering
+    print('the detected by only one rate is ' + str(1- len(dectedby2) / mosquitoesnum))
+    return dectedby2, ImgAfterClustering, pointsOfAllMos
 
 
 def dbscanAndCovarianceForSoloHead(HeadImg, rank):
@@ -219,6 +239,7 @@ def dbscanAndCovarianceForSoloHead(HeadImg, rank):
     #
     dectedby2 = False
     Storepath = os.path.join(os.getcwd(), 'afterclustering\\Head')
+    HeadImgShape = HeadImg.shape
     db, points = dbscanFromIMG(HeadImg, 0.5, 100)  # Clustering
     X = points
     labels = db.labels_
@@ -228,7 +249,7 @@ def dbscanAndCovarianceForSoloHead(HeadImg, rank):
     num_pointInlable = gt_num_pointInlable(labels)
     for key in num_pointInlable.keys():
         print('cluster: ', key, 'num of points:', len(num_pointInlable[key]))
-        StoreSeperateImg(HeadImg, points, np.array(num_pointInlable[key]), rank, key, Storepath)
+        StoreSeperateImg(HeadImgShape, points, np.array(num_pointInlable[key]), rank, key, Storepath)
     ##Covariance
     X2Cov = list()
     Y2Cov = list()
@@ -244,7 +265,7 @@ def dbscanAndCovarianceForSoloHead(HeadImg, rank):
     return dectedby2, num_pointInlable
 
 
-def JudgeNoisyPointsAfterClustering(detectedby2, points, ImgAfterClustering, rectlist):
+def JudgeNoisyPointsAfterClustering(pointsOfAllMos, ImgAfterClustering, rectlist, rectForSoloImg):
     # =============================================================================================
     # To judge the noisy points if in the head bounding box, if so, output those points and store.
     # OUTPUT:NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = {'0': [points]
@@ -253,20 +274,28 @@ def JudgeNoisyPointsAfterClustering(detectedby2, points, ImgAfterClustering, rec
     #                                                                       }
     # =============================================================================================
     # ImgAfterClustering = dict(ImgAfterClustering)
+    IfStore = True
     NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = dict()  # store the filtered points in whole image.
-    NoisyPointsAfterJudgeIfInHeadBBox = list()  # to store filtered points for every mos
-    for mos in detectedby2:
-        mosi = mos * 2 - 1
-        mos = str(mos)
-        for point in ImgAfterClustering[mos]['-1']:
-            if points[point, 0] > rectlist[mosi][0] and points[point, 0] < rectlist[mosi][2] \
-                    and points[point, 1] > rectlist[mosi][1] and points[point, 1] < rectlist[mosi][3]:
-                NoisyPointsAfterJudgeIfInHeadBBox.append(point)
+    for mos in range(0, len(pointsOfAllMos)):
+        mosi = mos * 2 + 1
+        mosString = str(mos)
+        NoisyPointsAfterJudgeIfInHeadBBox = list()  # to store filtered points for every mos
+        for point in ImgAfterClustering[mosString]['-1']:
+            if pointsOfAllMos[mosString][point, 0] + rectForSoloImg[mos][0] > rectlist[mosi][0]: # The point X coordinate in whole image
+                if pointsOfAllMos[mosString][point, 0] + rectForSoloImg[mos][0] < rectlist[mosi][2]: # The point X coordinate in whole image
+                    if pointsOfAllMos[mosString][point, 1] + rectForSoloImg[mos][1] > rectlist[mosi][1]: # The point Y coordinate in whole image
+                        if pointsOfAllMos[mosString][point, 1] + rectForSoloImg[mos][1] < rectlist[mosi][3]: # The point Y coordinate in whole image
+                            NoisyPointsAfterJudgeIfInHeadBBox.append(point)
         NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg[mos] = NoisyPointsAfterJudgeIfInHeadBBox
+        if IfStore:
+            Storepath = os.path.join(os.getcwd(), 'afterclustering\\MouthAfterFilter\\')
+            soloimgShape = (rectForSoloImg[mos][2] - rectForSoloImg[mos][0], rectForSoloImg[mos][3] - rectForSoloImg[mos][1])
+            StoreSeperateImg(soloimgShape, pointsOfAllMos[str(mos)], np.array(NoisyPointsAfterJudgeIfInHeadBBox), mos, -1, Storepath)
+
     return NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg
 
 
-def getHeadAndTailRect(erodedpadding, IfStore = False):
+def getHeadAndTailRect(erodedpadding, IfStore=False):
     """
     现在在这张蚊子上测试没有问题，输入为这张蚊子的图片，
     需要的输出在rectlist这个变量上，顺序是    尾巴  头  尾巴  头  尾巴  头  尾巴 头  ……
@@ -340,7 +369,7 @@ def getHeadAndTailRect(erodedpadding, IfStore = False):
             rect1a.append(b)
             rectlist.append(rect1a)
             if IfStore:
-                folder1 = os.getcwd() + 'SavaImages'
+                folder1 = os.getcwd() + '\\SavaImages\\CropHead'
                 # 获取此py文件路径，在此路径选创建在new_folder文件夹中的test文件夹
                 folder2 = os.path.join(folder1, 'current')
                 folder3 = os.path.join(folder1, 'history')
@@ -351,15 +380,16 @@ def getHeadAndTailRect(erodedpadding, IfStore = False):
                     os.makedirs(folder2)
                 if not os.path.exists(folder3):
                     os.makedirs(folder3)
-                cropimageTail = cropimage[rect0[0][0]:rect0[0][2],rect0[0][1]:rect0[0][3]]
-                cropimageHead = cropimage[rect1[0][0]:rect1[0][2],rect1[0][1]:rect1[0][3]]
+                cropimageTail = cropimage[rect0[0][0]:rect0[0][2], rect0[0][1]:rect0[0][3]]
+                cropimageHead = cropimage[rect1[0][0]:rect1[0][2], rect1[0][1]:rect1[0][3]]
                 cropimage3 = Image.fromarray(cropimageTail)
-                cropimage3.save(folder2 + 'cropimage' + str(i) + '_onlytail.jpg')
+                cropimage3.save(folder2 + '\\cropimage' + str(i) + '_onlytail.jpg')
                 cropimage3.save(folder3 + imagename + 'cropimage' + str(i) + '_onlytail.jpg')
                 cropimage4 = Image.fromarray(cropimageHead)
-                cropimage4.save(folder2 + 'cropimage' + str(i) + '_onlyhead.jpg')
-                cropimage4.save(folder3 +  imagename + 'cropimage' + str(i) + '_onlyhead.jpg')
+                cropimage4.save(folder2 + '\\cropimage' + str(i) + '_onlyhead.jpg')
+                cropimage4.save(folder3 + '\\' + imagename + 'cropimage' + str(i) + '_onlyhead.jpg')
     return rectlist
+
 
 def HolesFill(im_at_fixedOverGrey):
     # 内部孔填充算法，从（0,0）开始
@@ -373,8 +403,31 @@ def HolesFill(im_at_fixedOverGrey):
     # Invert floodfilled image
     im_floodfill_inv = cv2.bitwise_not(im_floodfill)
     # Combine the two images to get the foreground.
-    im_out = im_at_fixedOverGrey | im_floodfill_inv
-    return im_out
+    imgOverGreyAfterFill = im_at_fixedOverGrey | im_floodfill_inv
+    return imgOverGreyAfterFill
+
+
+# Hough Ciecles, but the parameter is a exact number.we can modify it in the function
+def HoughCircles(img):
+    img = cv2.medianBlur(img, 5)
+    cimg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
+    circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, 35,
+                               param1=20, param2=8, minRadius=5, maxRadius=13)
+    if circles is not None:
+        circles = np.uint16(np.around(circles))
+        print(circles.shape, '\n', len(img))
+        for i in circles[0, :]:
+            # draw the outer circle
+            cv2.circle(cimg, (i[0], i[1]), i[2], (0, 255, 0), 2)
+            # draw the center of the circle
+            cv2.circle(cimg, (i[0], i[1]), 2, (0, 0, 255), 3)
+
+        cv2.imshow('detected circles', cimg)
+        cv2.waitKey(1000)
+        cv2.destroyAllWindows()
+
+    return circles
 
 
 # input picture and save
@@ -384,7 +437,7 @@ img = cv2.imread(imagename + '.jpg', cv2.IMREAD_GRAYSCALE)
 # grayprocess, erode using kernel
 retval, im_at_fixed = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY_INV)
 retval2, im_at_fixedOverGrey = cv2.threshold(img, 60, 255, cv2.THRESH_BINARY_INV)
-kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4)) # errosion for remove legs
+kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))  # errosion for remove legs
 eroded = cv2.erode(im_at_fixed, kernel)
 # padding 0
 erodedpadding = cv2.copyMakeBorder(eroded, 3, 3, 3, 3, cv2.BORDER_CONSTANT, value=0)
@@ -395,7 +448,18 @@ num, index, mosquitoesnum, afternoise, rectForSoloImg = getRemovePoints(output[1
 # num: n*2 array; index: dict{'1':[x,y]...} mosquitoesnum  ; afternoise: img after removal noisy; rect: array of bbp.
 # get soloimage: soloImage[0]->arrayMos1  soloImage[1]->arrayMos2   ...
 soloImage = SeperateAndStoreInList(afternoise, mosquitoesnum, rectForSoloImg, IfStore=True)
-detectedby2, ImgAfterClustering = dbscanAndCovarianceForSoloMos(soloImage, mosquitoesnum)
-rectlist = getHeadAndTailRect(erodedpadding, IfStore=False)
-NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = JudgeNoisyPointsAfterClustering(detectedby2, points, ImgAfterClustering, rectlist)
+detectedby2, ImgAfterClustering, pointsOfAllMos = dbscanAndCovarianceForSoloMos(soloImage, mosquitoesnum)
+rectlist = getHeadAndTailRect(erodedpadding, IfStore=True)
+NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = JudgeNoisyPointsAfterClustering(
+                                                                               pointsOfAllMos, ImgAfterClustering,
+                                                                               rectlist, rectForSoloImg)
+imgOverGreyAfterFill = HolesFill(im_at_fixedOverGrey)
+CirclesOfAllMos = dict()  # Store the infomation of hough circles, {'0': array([x,y,r])
+#                                                                       ...
+#                                                                                   }
+for i in range(0, mosquitoesnum):
+    HeadimgForHough = imgOverGreyAfterFill[rectlist[2 * i + 1][0]:rectlist[2 * i + 1][2],
+                      rectlist[2 * i + 1][1]:rectlist[2 * i + 1][3]]
+    circles = HoughCircles(HeadimgForHough)
 
+    CirclesOfAllMos[str(i)] = circles
