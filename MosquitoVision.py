@@ -43,10 +43,10 @@ def getRemovePoints(matrix, classes, eroded):
             for j in range(0, len(RemoveIndex[str(i)])):
                 xdata.append(RemoveIndex[str(i)][j][0])
                 ydata.append(RemoveIndex[str(i)][j][1])
-            xmax = max(xdata) + 2
-            xmin = min(xdata) - 2
-            ymax = max(ydata) + 2
-            ymin = min(ydata) - 2
+            xmax = max(xdata) + 3
+            xmin = min(xdata) - 3
+            ymax = max(ydata) + 3
+            ymin = min(ydata) - 3
             b += 1
             # height=xmax-xmin+1
             # width=ymax-ymin+1
@@ -411,6 +411,7 @@ def HolesFill(im_at_fixedOverGrey):
 
 # Hough Ciecles, but the parameter is a exact number.we can modify it in the function
 def HoughCircles(img):
+    IfPlay = True
     img = cv2.medianBlur(img, 5)
     cimg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
@@ -424,14 +425,40 @@ def HoughCircles(img):
             cv2.circle(cimg, (i[0], i[1]), i[2], (0, 255, 0), 2)
             # draw the center of the circle
             cv2.circle(cimg, (i[0], i[1]), 2, (0, 0, 255), 3)
-
-        cv2.imshow('detected circles', cimg)
-        cv2.waitKey(1000)
-        cv2.destroyAllWindows()
+        if IfPlay:
+            cv2.imshow('detected circles', cimg)
+            cv2.waitKey(1000)
+            cv2.destroyAllWindows()
 
     return circles
 
 
+def plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg):
+
+    for mos in range(0,len(rectForSoloImg)):
+        ## draw Heads Circles
+        if CirclesOfAllMos[str(mos)] is not None:
+            CircleCentX = CirclesOfAllMos[str(mos)][0][0][1] + rectlist[2 * mos + 1][0]
+            CircleCentY = CirclesOfAllMos[str(mos)][0][0][0] + rectlist[2 * mos + 1][1]
+            Radius = CirclesOfAllMos[str(mos)][0][0][2]
+            rr, cc = draw.circle(CircleCentX, CircleCentY, Radius)
+            draw.set_color(imgColor, [rr, cc], [0, 255, 200])
+        ## draw Heads and Tails Rects
+        HeadRectStart = [rectlist[2 * mos + 1][0], rectlist[2 * mos + 1][1]]
+        HeadRectExtent = [rectlist[2 * mos + 1][2], rectlist[2 * mos + 1][3]]
+        TailRectStart = [rectlist[2 * mos][0], rectlist[2 * mos][1]]
+        TailRectExtent = [rectlist[2 * mos][2], rectlist[2 * mos][3]]
+        SoloMosRectStart = [rectForSoloImg[mos][0], rectForSoloImg[mos][1]]
+        SoloMosRectExtent = [rectForSoloImg[mos][2], rectForSoloImg[mos][3]]
+
+        #rrHead, ccHead = draw.rectangle(HeadRectStart, HeadRectExtent)
+        #draw.set_color(imgColor, [rrHead, ccHead], [0, 255, 0])
+        #rrTail, ccTail = draw.rectangle(TailRectStart, TailRectExtent)
+        #draw.set_color(imgColor, [rrTail, ccTail], [255, 0, 0])
+        #rrSoloMos, ccSoloMos = draw.rectangle(SoloMosRectStart, SoloMosRectExtent)
+        #draw.set_color(imgColor, [rrSoloMos, ccSoloMos], [0, 0, 255])
+    plt.imshow(imgColor)
+    plt.show()
 # input picture and save
 imagename = "19_0313_9"
 imgColor = cv2.imread(imagename + '.jpg', cv2.IMREAD_COLOR)
@@ -447,7 +474,9 @@ erodedpadding = cv2.copyMakeBorder(eroded, 3, 3, 3, 3, cv2.BORDER_CONSTANT, valu
 
 # main function
 output = cv2.connectedComponentsWithStats(erodedpadding, 4, cv2.CV_32S)
-num, index, mosquitoesnum, afternoise, rectForSoloImg = getRemovePoints(output[1], output[0], erodedpadding)
+ArrayAfterComponents = output[1]
+NumOfComponents = output[0]
+num, index, mosquitoesnum, afternoise, rectForSoloImg = getRemovePoints(ArrayAfterComponents, NumOfComponents, erodedpadding)
 # num: n*2 array; index: dict{'1':[x,y]...} mosquitoesnum  ; afternoise: img after removal noisy; rect: array of bbp.
 # get soloimage: soloImage[0]->arrayMos1  soloImage[1]->arrayMos2   ...
 soloImage = SeperateAndStoreInList(afternoise, mosquitoesnum, rectForSoloImg, IfStore=True)
@@ -457,6 +486,7 @@ NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = JudgeNoisyPointsAfterClustering(
                                                                                pointsOfAllMos, ImgAfterClustering,
                                                                                rectlist, rectForSoloImg)
 imgOverGreyAfterFill = HolesFill(im_at_fixedOverGrey)
+
 CirclesOfAllMos = dict()  # Store the infomation of hough circles, {'0': array([x,y,r])
 #                                                                       ...
 #                                                                                   }
@@ -466,12 +496,4 @@ for i in range(0, mosquitoesnum):
     circles = HoughCircles(HeadimgForHough)
 
     CirclesOfAllMos[str(i)] = circles
-
-def plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg):
-
-    for mos in len(rectlist):
-        CircleCentX = CirclesOfAllMos[str(mos)][0]
-        CircleCentY = CirclesOfAllMos[str(mos)][1]
-        Radius = CirclesOfAllMos[str(mos)][2]
-        rr, cc = draw.circle_perimeter(CircleCentX, CircleCentY, Radius)
-        draw.set_color(imgColor, [rr, cc], [0, 255, 0])
+plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg)
