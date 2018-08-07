@@ -44,10 +44,10 @@ def getRemovePoints(matrix, classes, eroded):
             for j in range(0, len(RemoveIndex[str(i)])):
                 xdata.append(RemoveIndex[str(i)][j][0])
                 ydata.append(RemoveIndex[str(i)][j][1])
-            xmax = max(xdata) + 3
-            xmin = min(xdata) - 3
-            ymax = max(ydata) + 3
-            ymin = min(ydata) - 3
+            xmax = max(xdata) +1
+            xmin = min(xdata) -1
+            ymax = max(ydata) +1
+            ymin = min(ydata) -1
             b += 1
             # height=xmax-xmin+1
             # width=ymax-ymin+1
@@ -198,7 +198,12 @@ def dbscanAndCovarianceForSoloMos(soloImage, mosquitoesnum):
     #
     dectedby2 = list()
     ImgAfterClustering = dict()
-    Storepath = os.path.join(os.getcwd(), 'afterclustering\\Mosquito\\')
+    Storepath = os.path.join(os.getcwd(), 'SavaImages\\afterclustering\\Mosquito\\current\\')
+    if not os.path.exists(Storepath):
+        os.makedirs(Storepath)
+    filelist = glob.glob(os.path.join(Storepath, "*.jpg"))
+    for f in filelist:
+        os.remove(f)
     IfPrintCovrariance = True
     pointsOfAllMos = dict()  # Store all the points of every solo mos in mos bounding box.
     for i in range(0, len(soloImage)):
@@ -237,8 +242,7 @@ def dbscanAndCovarianceForSoloMos(soloImage, mosquitoesnum):
     print('the detected by only one rate is ' + str(1 - len(dectedby2) / mosquitoesnum))
     return dectedby2, ImgAfterClustering, pointsOfAllMos
 
-
-def dbscanAndCovarianceForSoloHead(HeadImg, rank):
+'''def dbscanAndCovarianceForSoloHead(HeadImg, rank):
     # input:
     #       HeadImg: only the img of the head
     #       rank: it is for the filename. More detail in function -- 'StoreSeperateImg'
@@ -273,6 +277,7 @@ def dbscanAndCovarianceForSoloHead(HeadImg, rank):
     if NoisyCov[0][0] < 100 and NoisyCov[1][1] < 100:
         dectedby2 = True
     return dectedby2, num_pointInlable
+'''
 
 
 def JudgeNoisyPointsAfterClustering(pointsOfAllMos, ImgAfterClustering, rectlist, rectForSoloImg, IfStore=False):
@@ -285,6 +290,20 @@ def JudgeNoisyPointsAfterClustering(pointsOfAllMos, ImgAfterClustering, rectlist
     # =============================================================================================
     # ImgAfterClustering = dict(ImgAfterClustering)
     NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = dict()  # store the filtered points in whole image.
+    if IfStore:
+        folder1 = os.getcwd() + '\\SavaImages\\afterclustering'
+        folder11 = os.path.join(folder1, 'MouthAfterFilter\\')
+        # 获取此py文件路径，在此路径选创建在new_folder文件夹中的test文件夹
+        folder2 = os.path.join(folder11, 'current\\')
+        if not os.path.exists(folder1):
+            os.makedirs(folder1)
+        if not os.path.exists(folder11):
+            os.makedirs(folder11)
+        if not os.path.exists(folder2):
+            os.makedirs(folder2)
+        filelist = glob.glob(os.path.join(folder2, "*.jpg"))
+        for f in filelist:
+            os.remove(f)
     for mos in range(0, len(pointsOfAllMos)):
         mosi = mos * 2 + 1
         mosString = str(mos)
@@ -306,20 +325,7 @@ def JudgeNoisyPointsAfterClustering(pointsOfAllMos, ImgAfterClustering, rectlist
         else:
             print('No.' + str(mos) + ': there is no potential mouth detected')
         if IfStore:
-            folder1 = os.getcwd() + '\\SavaImages\\afterclustering'
-            folder11 = os.path.join(folder1, 'MouthAfterFilter')
-            # 获取此py文件路径，在此路径选创建在new_folder文件夹中的test文件夹
-            folder2 = os.path.join(folder11, 'current')
-            if not os.path.exists(folder1):
-                os.makedirs(folder1)
-            if not os.path.exists(folder11):
-                os.makedirs(folder11)
-            if not os.path.exists(folder2):
-                os.makedirs(folder2)
-            filelist = glob.glob(os.path.join(folder2, "*.jpg"))
-            for f in filelist:
-                os.remove(f)
-            Storepath = folder11
+            Storepath = folder2
             soloimgShape = (
             rectForSoloImg[mos][2] - rectForSoloImg[mos][0], rectForSoloImg[mos][3] - rectForSoloImg[mos][1])
             StoreSeperateImg(soloimgShape, pointsOfAllMos[str(mos)], np.array(NoisyPointsAfterJudgeIfInHeadBBox), mos,
@@ -397,28 +403,28 @@ def getHeadAndTailRect(erodedpadding, IfStore=False):
             rect0a = []
             rect1a = []
 
-            b = rect[i][0] + rect0[0][0] - 3
+            b = rect[i][0] + rect0[0][0] -3 - 2
             rect0a.append(b)
-            b = rect[i][1] + rect0[0][1] - 3
+            b = rect[i][1] + rect0[0][1] -3 - 2
             rect0a.append(b)
-            b = rect[i][0] + rect0[0][2] - 3
+            b = rect[i][0] + rect0[0][2] -3 + 2
             rect0a.append(b)
-            b = rect[i][1] + rect0[0][3] - 3
+            b = rect[i][1] + rect0[0][3] -3 + 2
             rect0a.append(b)
             rectlist.append(rect0a)
 
-            b = rect[i][0] + rect1[0][0] - 3
+            b = rect[i][0] + rect1[0][0] -3 - 2
             rect1a.append(b)
-            b = rect[i][1] + rect1[0][1] - 3
+            b = rect[i][1] + rect1[0][1] -3 - 2
             rect1a.append(b)
-            b = rect[i][0] + rect1[0][2] - 3
+            b = rect[i][0] + rect1[0][2] -3 + 2
             rect1a.append(b)
-            b = rect[i][1] + rect1[0][3] - 3
+            b = rect[i][1] + rect1[0][3] -3 + 2
             rect1a.append(b)
             rectlist.append(rect1a)
             if IfStore:
-                cropimageTail = cropimage[rect0[0][0]:rect0[0][2], rect0[0][1]:rect0[0][3]]
-                cropimageHead = cropimage[rect1[0][0]:rect1[0][2], rect1[0][1]:rect1[0][3]]
+                cropimageTail = cropimage[rect0[0][0]-1:rect0[0][2]+1, rect0[0][1]-1:rect0[0][3]+1]
+                cropimageHead = cropimage[rect1[0][0]-1:rect1[0][2]+1, rect1[0][1]-1:rect1[0][3]+1]
                 cropimage3 = Image.fromarray(cropimageTail)
                 cropimage3.save(folder2 + '\\cropimage' + str(i) + '_onlytail.jpg')
                 cropimage3.save(folder3 + '\\' + imagename + 'cropimage' + str(i) + '_onlytail.jpg')
@@ -496,9 +502,11 @@ def plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPo
 
 
 # input picture and save
-imagename = "11_0381_4"
-imgColor = cv2.imread(imagename + '.jpg', cv2.IMREAD_COLOR)
-img = cv2.imread(imagename + '.jpg', cv2.IMREAD_GRAYSCALE)
+imagename = "5_0192_1.jpg"
+datapath = r'C:\Users\Zed_Luz\OneDrive\3-MEE\18-JHU\12-Work\5-MosquitoRecog\7-data\train'
+imgpath = os.path.join(datapath, imagename)
+imgColor = cv2.imread(imgpath, cv2.IMREAD_COLOR)
+img = cv2.imread(imgpath, cv2.IMREAD_GRAYSCALE)
 
 # grayprocess, erode using kernel
 retval, im_at_fixed = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY_INV)
@@ -514,11 +522,16 @@ ArrayAfterComponents = output[1]
 NumOfComponents = output[0]
 num, index, mosquitoesnum, afternoise, rectForSoloImg = getRemovePoints(ArrayAfterComponents, NumOfComponents,
                                                                         erodedpadding)
+
 # num: n*2 array; index: dict{'1':[x,y]...} mosquitoesnum  ; afternoise: img after removal noisy; rect: array of bbp.
 # get soloimage: soloImage[0]->arrayMos1  soloImage[1]->arrayMos2   ...
 soloImage = SeperateAndStoreInList(afternoise, mosquitoesnum, rectForSoloImg, IfStore=True)
 detectedby2, ImgAfterClustering, pointsOfAllMos = dbscanAndCovarianceForSoloMos(soloImage, mosquitoesnum)
 rectlist = getHeadAndTailRect(erodedpadding, IfStore=True)
+## Huang Guanqun xiajibaluangao
+for a in range(0,len(rectForSoloImg)):
+    for i in range(0, len(rectForSoloImg[a])):
+        rectForSoloImg[a][i] = rectForSoloImg[a][i]-3
 NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = JudgeNoisyPointsAfterClustering(
     pointsOfAllMos, ImgAfterClustering,
     rectlist, rectForSoloImg, IfStore=True)
