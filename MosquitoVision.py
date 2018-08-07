@@ -7,6 +7,7 @@ This is the whole code for the traditional method to do the detection for mosqui
 import cv2
 import numpy as np
 import os
+import glob
 from PIL import Image
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
@@ -113,21 +114,25 @@ def SeperateAndStoreInList(img, mosquitoesnum, rect, IfStore=False):
     # ...
     # ]----type: list
     soloImage = []
+    if IfStore:
+        folder1 = os.getcwd() + '\\SavaImages\\CropMos'
+        # 获取此py文件路径，在此路径选创建在new_folder文件夹中的test文件夹
+        folder2 = os.path.join(folder1, 'current')
+        folder3 = os.path.join(folder1, 'history')
+
+        if not os.path.exists(folder1):
+            os.makedirs(folder1)
+        if not os.path.exists(folder2):
+            os.makedirs(folder2)
+        if not os.path.exists(folder3):
+            os.makedirs(folder3)
+        filelist = glob.glob(os.path.join(folder2, "*.jpg"))
+        for f in filelist:
+            os.remove(f)
     for i in range(0, mosquitoesnum):
         cropimage = img[rect[i][0]:rect[i][2], rect[i][1]:rect[i][3]]
         soloImage.append(list(cropimage))
         if IfStore:
-            folder1 = os.getcwd() + '\\SavaImages\\CropMos'
-            # 获取此py文件路径，在此路径选创建在new_folder文件夹中的test文件夹
-            folder2 = os.path.join(folder1, 'current')
-            folder3 = os.path.join(folder1, 'history')
-
-            if not os.path.exists(folder1):
-                os.makedirs(folder1)
-            if not os.path.exists(folder2):
-                os.makedirs(folder2)
-            if not os.path.exists(folder3):
-                os.makedirs(folder3)
             cropimage = Image.fromarray(cropimage)
             cropimage.save(folder2 + '\\cropimage' + str(i) + '.jpg')
             cropimage.save(folder3 + '\\' + imagename + 'cropimage' + str(i) + '.jpg')
@@ -195,38 +200,41 @@ def dbscanAndCovarianceForSoloMos(soloImage, mosquitoesnum):
     ImgAfterClustering = dict()
     Storepath = os.path.join(os.getcwd(), 'afterclustering\\Mosquito\\')
     IfPrintCovrariance = True
-    pointsOfAllMos = dict() # Store all the points of every solo mos in mos bounding box.
+    pointsOfAllMos = dict()  # Store all the points of every solo mos in mos bounding box.
     for i in range(0, len(soloImage)):
         soloimg = soloImage[i]
         soloimg = np.array(soloimg)
         soloimgShape = soloimg.shape
         db, points = dbscanFromIMG(soloimg, 0.5, 200)  # Clustering
-        pointsOfAllMos[str(i)] = points # 每张文字图片里点的坐标
+        pointsOfAllMos[str(i)] = points  # 每张文字图片里点的坐标
         X = points
         labels = db.labels_
         # Number of clusters in labels, ignoring noise if present.
         n_clusters_ = len(set(labels))
-        print('after 1st clustering, the num of all clusterings: ', n_clusters_)
+        print('No.', i, '\nafter clustering, the num of all clusterings: ', n_clusters_)
         num_pointInlable = gt_num_pointInlable(labels)
         ImgAfterClustering[str(i)] = num_pointInlable
         for key in num_pointInlable.keys():
             print('cluster: ', key, 'num of points:', len(num_pointInlable[key]))
             StoreSeperateImg(soloimgShape, points, np.array(num_pointInlable[key]), i, key, Storepath)
         ##Covariance
-        X2Cov = list()
-        Y2Cov = list()
-        for a in num_pointInlable[str(-1)]:
-            X2Cov.append(X[a][0])
-            Y2Cov.append(X[a][1])
-        X2Cov = np.array(X2Cov)
-        Y2Cov = np.array(Y2Cov)
-        NoisyCov = np.cov(X2Cov, Y2Cov)
-        if IfPrintCovrariance:
-            print(i, ',Covariance:\n', NoisyCov)
-        if NoisyCov[0][0] > 170 or NoisyCov[1][1] > 170:
-            dectedby2.append(i)
-            print(i, ': bad(detected by 2)')
-    print('the detected by only one rate is ' + str(1- len(dectedby2) / mosquitoesnum))
+        if '-1' in num_pointInlable.keys():
+            X2Cov = list()
+            Y2Cov = list()
+            for a in num_pointInlable[str(-1)]:
+                X2Cov.append(X[a][0])
+                Y2Cov.append(X[a][1])
+            X2Cov = np.array(X2Cov)
+            Y2Cov = np.array(Y2Cov)
+            NoisyCov = np.cov(X2Cov, Y2Cov)
+            if IfPrintCovrariance:
+                print('No.', i, ',Covariance:\n', NoisyCov)
+            if NoisyCov[0][0] > 170 or NoisyCov[1][1] > 170:
+                dectedby2.append(i)
+                print('No.', i, ': bad(detected by 2)')
+        else:
+            print('No.', i, ':This mosquito\'s mouth is not able to be detected!')
+    print('the detected by only one rate is ' + str(1 - len(dectedby2) / mosquitoesnum))
     return dectedby2, ImgAfterClustering, pointsOfAllMos
 
 
@@ -267,32 +275,55 @@ def dbscanAndCovarianceForSoloHead(HeadImg, rank):
     return dectedby2, num_pointInlable
 
 
-def JudgeNoisyPointsAfterClustering(pointsOfAllMos, ImgAfterClustering, rectlist, rectForSoloImg):
+def JudgeNoisyPointsAfterClustering(pointsOfAllMos, ImgAfterClustering, rectlist, rectForSoloImg, IfStore=False):
     # =============================================================================================
     # To judge the noisy points if in the head bounding box, if so, output those points and store.
-    # OUTPUT:NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = {'0': [points]
-    #                                                        '1': [points]
+    # OUTPUT:NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = {0: [points]
+    #                                                        1: [points]
     #                                                        ...
     #                                                                       }
     # =============================================================================================
     # ImgAfterClustering = dict(ImgAfterClustering)
-    IfStore = True
     NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = dict()  # store the filtered points in whole image.
     for mos in range(0, len(pointsOfAllMos)):
         mosi = mos * 2 + 1
         mosString = str(mos)
         NoisyPointsAfterJudgeIfInHeadBBox = list()  # to store filtered points for every mos
-        for point in ImgAfterClustering[mosString]['-1']:
-            if pointsOfAllMos[mosString][point, 0] + rectForSoloImg[mos][0] > rectlist[mosi][0]: # The point X coordinate in whole image
-                if pointsOfAllMos[mosString][point, 0] + rectForSoloImg[mos][0] < rectlist[mosi][2]: # The point X coordinate in whole image
-                    if pointsOfAllMos[mosString][point, 1] + rectForSoloImg[mos][1] > rectlist[mosi][1]: # The point Y coordinate in whole image
-                        if pointsOfAllMos[mosString][point, 1] + rectForSoloImg[mos][1] < rectlist[mosi][3]: # The point Y coordinate in whole image
-                            NoisyPointsAfterJudgeIfInHeadBBox.append(point)
-        NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg[mos] = NoisyPointsAfterJudgeIfInHeadBBox
+        if str(-1) in ImgAfterClustering[mosString].keys():
+            for point in ImgAfterClustering[mosString]['-1']:
+                if pointsOfAllMos[mosString][point, 0] + rectForSoloImg[mos][0] > rectlist[mosi][
+                    0]:  # The point X coordinate in whole image
+                    if pointsOfAllMos[mosString][point, 0] + rectForSoloImg[mos][0] < rectlist[mosi][
+                        2]:  # The point X coordinate in whole image
+                        if pointsOfAllMos[mosString][point, 1] + rectForSoloImg[mos][1] > rectlist[mosi][
+                            1]:  # The point Y coordinate in whole image
+                            if pointsOfAllMos[mosString][point, 1] + rectForSoloImg[mos][1] < rectlist[mosi][
+                                3]:  # The point Y coordinate in whole image
+                                NoisyPointsAfterJudgeIfInHeadBBox.append(point)
+            NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg[mos] = NoisyPointsAfterJudgeIfInHeadBBox
+            if NoisyPointsAfterJudgeIfInHeadBBox is []:
+                print('No.', + mos + ': the potential mouth is not in Head box')
+        else:
+            print('No.' + str(mos) + ': there is no potential mouth detected')
         if IfStore:
-            Storepath = os.path.join(os.getcwd(), 'afterclustering\\MouthAfterFilter\\')
-            soloimgShape = (rectForSoloImg[mos][2] - rectForSoloImg[mos][0], rectForSoloImg[mos][3] - rectForSoloImg[mos][1])
-            StoreSeperateImg(soloimgShape, pointsOfAllMos[str(mos)], np.array(NoisyPointsAfterJudgeIfInHeadBBox), mos, -1, Storepath)
+            folder1 = os.getcwd() + '\\SavaImages\\afterclustering'
+            folder11 = os.path.join(folder1, 'MouthAfterFilter')
+            # 获取此py文件路径，在此路径选创建在new_folder文件夹中的test文件夹
+            folder2 = os.path.join(folder11, 'current')
+            if not os.path.exists(folder1):
+                os.makedirs(folder1)
+            if not os.path.exists(folder11):
+                os.makedirs(folder11)
+            if not os.path.exists(folder2):
+                os.makedirs(folder2)
+            filelist = glob.glob(os.path.join(folder2, "*.jpg"))
+            for f in filelist:
+                os.remove(f)
+            Storepath = folder11
+            soloimgShape = (
+            rectForSoloImg[mos][2] - rectForSoloImg[mos][0], rectForSoloImg[mos][3] - rectForSoloImg[mos][1])
+            StoreSeperateImg(soloimgShape, pointsOfAllMos[str(mos)], np.array(NoisyPointsAfterJudgeIfInHeadBBox), mos,
+                             -1, Storepath)
 
     return NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg
 
@@ -312,6 +343,21 @@ def getHeadAndTailRect(erodedpadding, IfStore=False):
 
     retval1, afternoise = cv2.threshold(afternoise, 10, 255, cv2.THRESH_BINARY)
     rectlist = []
+    if IfStore:  ## Clear all files in Current
+        folder1 = os.getcwd() + '\\SavaImages\\CropHead'
+        # 获取此py文件路径，在此路径选创建在new_folder文件夹中的test文件夹
+        folder2 = os.path.join(folder1, 'current')
+        folder3 = os.path.join(folder1, 'history')
+
+        if not os.path.exists(folder1):
+            os.makedirs(folder1)
+        if not os.path.exists(folder2):
+            os.makedirs(folder2)
+        if not os.path.exists(folder3):
+            os.makedirs(folder3)
+        filelist = glob.glob(os.path.join(folder2, "*.jpg"))
+        for f in filelist:
+            os.remove(f)
     # save image
     for i in range(0, mosquitoesnum):
         # image crop
@@ -371,22 +417,11 @@ def getHeadAndTailRect(erodedpadding, IfStore=False):
             rect1a.append(b)
             rectlist.append(rect1a)
             if IfStore:
-                folder1 = os.getcwd() + '\\SavaImages\\CropHead'
-                # 获取此py文件路径，在此路径选创建在new_folder文件夹中的test文件夹
-                folder2 = os.path.join(folder1, 'current')
-                folder3 = os.path.join(folder1, 'history')
-
-                if not os.path.exists(folder1):
-                    os.makedirs(folder1)
-                if not os.path.exists(folder2):
-                    os.makedirs(folder2)
-                if not os.path.exists(folder3):
-                    os.makedirs(folder3)
                 cropimageTail = cropimage[rect0[0][0]:rect0[0][2], rect0[0][1]:rect0[0][3]]
                 cropimageHead = cropimage[rect1[0][0]:rect1[0][2], rect1[0][1]:rect1[0][3]]
                 cropimage3 = Image.fromarray(cropimageTail)
                 cropimage3.save(folder2 + '\\cropimage' + str(i) + '_onlytail.jpg')
-                cropimage3.save(folder3 + imagename + 'cropimage' + str(i) + '_onlytail.jpg')
+                cropimage3.save(folder3 + '\\' + imagename + 'cropimage' + str(i) + '_onlytail.jpg')
                 cropimage4 = Image.fromarray(cropimageHead)
                 cropimage4.save(folder2 + '\\cropimage' + str(i) + '_onlyhead.jpg')
                 cropimage4.save(folder3 + '\\' + imagename + 'cropimage' + str(i) + '_onlyhead.jpg')
@@ -411,7 +446,7 @@ def HolesFill(im_at_fixedOverGrey):
 
 # Hough Ciecles, but the parameter is a exact number.we can modify it in the function
 def HoughCircles(img):
-    IfPlay = True
+    IfPlay = False
     img = cv2.medianBlur(img, 5)
     cimg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
@@ -419,7 +454,7 @@ def HoughCircles(img):
                                param1=20, param2=8, minRadius=5, maxRadius=13)
     if circles is not None:
         circles = np.uint16(np.around(circles))
-        print(circles.shape, '\n', len(img))
+        print('Potential Head detected, position: ' + 'X:' +  str(circles[0][0][1]) + ', Y:' + str(circles[0][0][2]) + '\n')
         for i in circles[0, :]:
             # draw the outer circle
             cv2.circle(cimg, (i[0], i[1]), i[2], (0, 255, 0), 2)
@@ -434,8 +469,7 @@ def HoughCircles(img):
 
 
 def plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg):
-
-    for mos in range(0,len(rectForSoloImg)):
+    for mos in range(0, len(rectForSoloImg)):
         ## draw Heads Circles
         if CirclesOfAllMos[str(mos)] is not None:
             CircleCentX = CirclesOfAllMos[str(mos)][0][0][1] + rectlist[2 * mos + 1][0]
@@ -451,16 +485,18 @@ def plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPo
         SoloMosRectStart = [rectForSoloImg[mos][0], rectForSoloImg[mos][1]]
         SoloMosRectExtent = [rectForSoloImg[mos][2], rectForSoloImg[mos][3]]
 
-        #rrHead, ccHead = draw.rectangle(HeadRectStart, HeadRectExtent)
-        #draw.set_color(imgColor, [rrHead, ccHead], [0, 255, 0])
-        #rrTail, ccTail = draw.rectangle(TailRectStart, TailRectExtent)
-        #draw.set_color(imgColor, [rrTail, ccTail], [255, 0, 0])
-        #rrSoloMos, ccSoloMos = draw.rectangle(SoloMosRectStart, SoloMosRectExtent)
-        #draw.set_color(imgColor, [rrSoloMos, ccSoloMos], [0, 0, 255])
+        # rrHead, ccHead = draw.rectangle(HeadRectStart, HeadRectExtent)
+        # draw.set_color(imgColor, [rrHead, ccHead], [0, 255, 0])
+        # rrTail, ccTail = draw.rectangle(TailRectStart, TailRectExtent)
+        # draw.set_color(imgColor, [rrTail, ccTail], [255, 0, 0])
+        # rrSoloMos, ccSoloMos = draw.rectangle(SoloMosRectStart, SoloMosRectExtent)
+        # draw.set_color(imgColor, [rrSoloMos, ccSoloMos], [0, 0, 255])
     plt.imshow(imgColor)
     plt.show()
+
+
 # input picture and save
-imagename = "19_0313_9"
+imagename = "11_0381_4"
 imgColor = cv2.imread(imagename + '.jpg', cv2.IMREAD_COLOR)
 img = cv2.imread(imagename + '.jpg', cv2.IMREAD_GRAYSCALE)
 
@@ -476,23 +512,26 @@ erodedpadding = cv2.copyMakeBorder(eroded, 3, 3, 3, 3, cv2.BORDER_CONSTANT, valu
 output = cv2.connectedComponentsWithStats(erodedpadding, 4, cv2.CV_32S)
 ArrayAfterComponents = output[1]
 NumOfComponents = output[0]
-num, index, mosquitoesnum, afternoise, rectForSoloImg = getRemovePoints(ArrayAfterComponents, NumOfComponents, erodedpadding)
+num, index, mosquitoesnum, afternoise, rectForSoloImg = getRemovePoints(ArrayAfterComponents, NumOfComponents,
+                                                                        erodedpadding)
 # num: n*2 array; index: dict{'1':[x,y]...} mosquitoesnum  ; afternoise: img after removal noisy; rect: array of bbp.
 # get soloimage: soloImage[0]->arrayMos1  soloImage[1]->arrayMos2   ...
 soloImage = SeperateAndStoreInList(afternoise, mosquitoesnum, rectForSoloImg, IfStore=True)
 detectedby2, ImgAfterClustering, pointsOfAllMos = dbscanAndCovarianceForSoloMos(soloImage, mosquitoesnum)
 rectlist = getHeadAndTailRect(erodedpadding, IfStore=True)
 NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = JudgeNoisyPointsAfterClustering(
-                                                                               pointsOfAllMos, ImgAfterClustering,
-                                                                               rectlist, rectForSoloImg)
+    pointsOfAllMos, ImgAfterClustering,
+    rectlist, rectForSoloImg, IfStore=True)
 imgOverGreyAfterFill = HolesFill(im_at_fixedOverGrey)
 
 CirclesOfAllMos = dict()  # Store the infomation of hough circles, {'0': array([x,y,r])
 #                                                                       ...
 #                                                                                   }
+print('\nStart Hough Circle')
 for i in range(0, mosquitoesnum):
     HeadimgForHough = imgOverGreyAfterFill[rectlist[2 * i + 1][0]:rectlist[2 * i + 1][2],
                       rectlist[2 * i + 1][1]:rectlist[2 * i + 1][3]]
+    print('\nNo.' + str(i) + ':')
     circles = HoughCircles(HeadimgForHough)
 
     CirclesOfAllMos[str(i)] = circles
