@@ -34,7 +34,7 @@ def getRemovePoints(matrix, classes, eroded):
                 medium = np.array([i, j])
                 RemoveIndex.setdefault(str(index), []).append(medium)
     for i in range(0, classes - 1):
-        if number[i] < 1000:
+        if number[i] < 1000 or number[i]>7000:
             for j in range(0, len(RemoveIndex[str(i)])):
                 eroded[RemoveIndex[str(i)][j][0]][RemoveIndex[str(i)][j][1]] = 0  # removenoise
             del RemoveIndex[str(i)]
@@ -499,54 +499,3 @@ def plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPo
         # draw.set_color(imgColor, [rrSoloMos, ccSoloMos], [0, 0, 255])
     plt.imshow(imgColor)
     plt.show()
-
-
-# input picture and save
-datapath = r'C:\Users\Zed_Luz\OneDrive\3-MEE\18-JHU\12-Work\5-MosquitoRecog\7-data\train'
-imglist = os.listdir(datapath)
-imagename = imglist[10]
-imgpath = os.path.join(datapath, imagename)
-imgColor = cv2.imread(imgpath, cv2.IMREAD_COLOR)
-img = cv2.imread(imgpath, cv2.IMREAD_GRAYSCALE)
-
-# grayprocess, erode using kernel
-retval, im_at_fixed = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY_INV)
-retval2, im_at_fixedOverGrey = cv2.threshold(img, 60, 255, cv2.THRESH_BINARY_INV)
-kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))  # errosion for remove legs
-eroded = cv2.erode(im_at_fixed, kernel)
-# padding 0
-erodedpadding = cv2.copyMakeBorder(eroded, 3, 3, 3, 3, cv2.BORDER_CONSTANT, value=0)
-
-# main function
-output = cv2.connectedComponentsWithStats(erodedpadding, 4, cv2.CV_32S)
-ArrayAfterComponents = output[1]
-NumOfComponents = output[0]
-num, index, mosquitoesnum, afternoise, rectForSoloImg = getRemovePoints(ArrayAfterComponents, NumOfComponents,
-                                                                        erodedpadding)
-
-# num: n*2 array; index: dict{'1':[x,y]...} mosquitoesnum  ; afternoise: img after removal noisy; rect: array of bbp.
-# get soloimage: soloImage[0]->arrayMos1  soloImage[1]->arrayMos2   ...
-soloImage = SeperateAndStoreInList(afternoise, mosquitoesnum, rectForSoloImg, imagename, IfStore=True)
-detectedby2, ImgAfterClustering, pointsOfAllMos = dbscanAndCovarianceForSoloMos(soloImage, mosquitoesnum)
-rectlist = getHeadAndTailRect(erodedpadding, imagename, IfStore=True)
-## Huang Guanqun xiajibaluangao
-for a in range(0,len(rectForSoloImg)):
-    for i in range(0, len(rectForSoloImg[a])):
-        rectForSoloImg[a][i] = rectForSoloImg[a][i]-3
-NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = JudgeNoisyPointsAfterClustering(
-    pointsOfAllMos, ImgAfterClustering,
-    rectlist, rectForSoloImg, IfStore=True)
-imgOverGreyAfterFill = HolesFill(im_at_fixedOverGrey)
-
-CirclesOfAllMos = dict()  # Store the infomation of hough circles, {'0': array([x,y,r])
-#                                                                       ...
-#                                                                                   }
-print('\nStart Hough Circle')
-for i in range(0, mosquitoesnum):
-    HeadimgForHough = imgOverGreyAfterFill[rectlist[2 * i + 1][0]:rectlist[2 * i + 1][2],
-                      rectlist[2 * i + 1][1]:rectlist[2 * i + 1][3]]
-    print('\nNo.' + str(i) + ':')
-    circles = HoughCircles(HeadimgForHough)
-
-    CirclesOfAllMos[str(i)] = circles
-plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg)
