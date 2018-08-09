@@ -25,7 +25,7 @@ def getRemovePoints(matrix, classes, eroded):
     m = matrix.shape[0]
     n = matrix.shape[1]
     rect = []
-    b = 0
+    mosquitoesnum = 0
     for i in range(0, m - 1):
         for j in range(0, n - 1):
             if matrix[i][j] != 0:
@@ -34,7 +34,7 @@ def getRemovePoints(matrix, classes, eroded):
                 medium = np.array([i, j])
                 RemoveIndex.setdefault(str(index), []).append(medium)
     for i in range(0, classes - 1):
-        if number[i] < 1000 or number[i]>7000:
+        if number[i] < 1000 or number[i]>7000:# Condition1
             for j in range(0, len(RemoveIndex[str(i)])):
                 eroded[RemoveIndex[str(i)][j][0]][RemoveIndex[str(i)][j][1]] = 0  # removenoise
             del RemoveIndex[str(i)]
@@ -48,11 +48,16 @@ def getRemovePoints(matrix, classes, eroded):
             xmin = min(xdata) -1
             ymax = max(ydata) +1
             ymin = min(ydata) -1
-            b += 1
-            # height=xmax-xmin+1
-            # width=ymax-ymin+1
-            rect.append([xmin, ymin, xmax, ymax])
-    return number, RemoveIndex, b, eroded, rect
+            height=xmax-xmin+1
+            width=ymax-ymin+1
+            if height/width < 2 and width/height < 2:# Condition2
+                mosquitoesnum += 1
+                rect.append([xmin, ymin, xmax, ymax])
+            else:
+                if height+width > 200 and height+width < 400:
+                    mosquitoesnum += 1
+                    rect.append([xmin, ymin, xmax, ymax])
+    return number, RemoveIndex, mosquitoesnum, eroded, rect
 
 
 def connectedtobeak(matrix, classes, eroded):
@@ -451,12 +456,11 @@ def HolesFill(im_at_fixedOverGrey):
 
 
 # Hough Ciecles, but the parameter is a exact number.we can modify it in the function
-def HoughCircles(img):
-    IfPlay = False
+def HoughCircles(img, IfPlay = False):
     img = cv2.medianBlur(img, 5)
     cimg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
-    circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, 35,
+    circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 2, 35,
                                param1=20, param2=8, minRadius=5, maxRadius=13)
     if circles is not None:
         circles = np.uint16(np.around(circles))
@@ -474,15 +478,17 @@ def HoughCircles(img):
     return circles
 
 
-def plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg):
+def plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg, imagename,Ifsave = False):
     for mos in range(0, len(rectForSoloImg)):
         ## draw Heads Circles
         if CirclesOfAllMos[str(mos)] is not None:
-            CircleCentX = CirclesOfAllMos[str(mos)][0][0][1] + rectlist[2 * mos + 1][0]
-            CircleCentY = CirclesOfAllMos[str(mos)][0][0][0] + rectlist[2 * mos + 1][1]
-            Radius = CirclesOfAllMos[str(mos)][0][0][2]
-            rr, cc = draw.circle(CircleCentX, CircleCentY, Radius)
-            draw.set_color(imgColor, [rr, cc], [0, 255, 200])
+            for c in range(0, len(CirclesOfAllMos[str(mos)][0])):
+                c = 0 # Only use the first circle detected
+                CircleCentX = CirclesOfAllMos[str(mos)][0][c][1] + rectlist[2 * mos + 1][0]
+                CircleCentY = CirclesOfAllMos[str(mos)][0][c][0] + rectlist[2 * mos + 1][1]
+                Radius = CirclesOfAllMos[str(mos)][0][c][2]
+                rr, cc = draw.circle(CircleCentX, CircleCentY, Radius)
+                draw.set_color(imgColor, [rr, cc], [0, 255, 200])
         ## draw Heads and Tails Rects
         HeadRectStart = [rectlist[2 * mos + 1][0], rectlist[2 * mos + 1][1]]
         HeadRectExtent = [rectlist[2 * mos + 1][2], rectlist[2 * mos + 1][3]]
@@ -498,4 +504,9 @@ def plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPo
         # rrSoloMos, ccSoloMos = draw.rectangle(SoloMosRectStart, SoloMosRectExtent)
         # draw.set_color(imgColor, [rrSoloMos, ccSoloMos], [0, 0, 255])
     plt.imshow(imgColor)
+    if Ifsave:
+        plt.savefig(r'C:\Users\Zed_Luz\OneDrive\文档\GitHub\dbscan\SavaImages\afterFindHead\\'+imagename)
     plt.show()
+
+def relu(x):
+    return np.int((abs(x) + x) / 2)
