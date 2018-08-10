@@ -12,7 +12,7 @@ def ChooseSource(FromVideo = False, FromImage = False):
     if FromImage:
         datapath = r'C:\Users\Zed_Luz\OneDrive\3-MEE\18-JHU\12-Work\5-MosquitoRecog\7-data\train'
         imglist = os.listdir(datapath)
-        imagename = imglist[275]
+        imagename = imglist[276]
         imgpath = os.path.join(datapath, imagename)
         imgColor = cv2.imread(imgpath, cv2.IMREAD_COLOR)
         img = cv2.imread(imgpath, cv2.IMREAD_GRAYSCALE)
@@ -34,11 +34,11 @@ def ChooseSource(FromVideo = False, FromImage = False):
         imagename = 'Frame' + str(i)
     return imgColor, img, imagename
 
-imgColor, img, imagename = ChooseSource(FromVideo=False, FromImage=True)
+imgColor, img, imagename = ChooseSource(FromVideo=True, FromImage=False)
 
 # grayprocess, erode using kernel
-retval, im_at_fixed = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY_INV)# for video, the weo paras are 60/30, for image, they are 110/60
-retval2, im_at_fixedOverGrey = cv2.threshold(img, 50, 255, cv2.THRESH_BINARY_INV)
+retval, im_at_fixed = cv2.threshold(img, 60, 255, cv2.THRESH_BINARY_INV)# for video, the weo paras are 60/30, for image, they are 110/60
+retval2, im_at_fixedOverGrey = cv2.threshold(img, 30, 255, cv2.THRESH_BINARY_INV)
 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))  # errosion for remove legs
 eroded = cv2.erode(im_at_fixed, kernel)
 # padding 0
@@ -60,7 +60,7 @@ rectlist = MosquitoClass.getHeadAndTailRect(erodedpadding, imagename, IfStore=Tr
 for a in range(0,len(rectForSoloImg)):
     for i in range(0, len(rectForSoloImg[a])):
         rectForSoloImg[a][i] = rectForSoloImg[a][i]-3
-NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = MosquitoClass.JudgeNoisyPointsAfterClustering(
+NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg, All_Mouthes_XY = MosquitoClass.JudgeNoisyPointsAfterClustering(
     pointsOfAllMos, ImgAfterClustering,
     rectlist, rectForSoloImg, IfStore=True)
 imgOverGreyAfterFill = MosquitoClass.HolesFill(im_at_fixedOverGrey)
@@ -76,4 +76,6 @@ for i in range(0, mosquitoesnum):
     circles = MosquitoClass.HoughCircles(HeadimgForHough, IfPlay=False)
 
     CirclesOfAllMos[str(i)] = circles
-MosquitoClass.plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg, imagename, Ifsave = True)
+MosquitoClass.plotTheFeatures(imgColor, CirclesOfAllMos, rectlist,
+                              rectForSoloImg, NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg,
+                              imagename, Ifsave = True)

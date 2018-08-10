@@ -180,6 +180,15 @@ def StoreSeperateImg(soloimgShape, points, pointstoshow, rank, key, path):
     img = img.convert('RGB')
     img.save(path + 'clustering' + str(rank) + '.' + str(key) + '.jpg')
 
+def gt_FliteredMouthes(soloimgShape, points, pointstoshow):
+    # show the points that you'd like to show and store
+    height, width = soloimgShape
+    img = np.zeros([height, width])
+    PointsX = points[:, 0]
+    PointsY = points[:, 1]
+    for i in range(0, len(pointstoshow)):
+        img[PointsX[pointstoshow[i]]][PointsY[pointstoshow[i]]] = 255
+    return img
 
 def dbscanFromIMG(img, eps, min_samples):
     # input: img,eps,min_samples
@@ -295,6 +304,7 @@ def JudgeNoisyPointsAfterClustering(pointsOfAllMos, ImgAfterClustering, rectlist
     # =============================================================================================
     # ImgAfterClustering = dict(ImgAfterClustering)
     NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg = dict()  # store the filtered points in whole image.
+    All_Mouthes_XY = dict()
     if IfStore:
         folder1 = os.getcwd() + '\\SavaImages\\afterclustering'
         folder11 = os.path.join(folder1, 'MouthAfterFilter\\')
@@ -329,14 +339,15 @@ def JudgeNoisyPointsAfterClustering(pointsOfAllMos, ImgAfterClustering, rectlist
                 print('No.', + mos + ': the potential mouth is not in Head box')
         else:
             print('No.' + str(mos) + ': there is no potential mouth detected')
+        soloimgShape = (
+        rectForSoloImg[mos][2] - rectForSoloImg[mos][0], rectForSoloImg[mos][3] - rectForSoloImg[mos][1])
+        All_Mouthes_XY[mos] = gt_FliteredMouthes(soloimgShape, pointsOfAllMos[str(mos)], np.array(NoisyPointsAfterJudgeIfInHeadBBox))
         if IfStore:
             Storepath = folder2
-            soloimgShape = (
-            rectForSoloImg[mos][2] - rectForSoloImg[mos][0], rectForSoloImg[mos][3] - rectForSoloImg[mos][1])
             StoreSeperateImg(soloimgShape, pointsOfAllMos[str(mos)], np.array(NoisyPointsAfterJudgeIfInHeadBBox), mos,
                              -1, Storepath)
 
-    return NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg
+    return NoisyPointsAfterJudgeIfInHeadBBoxForWholeImg, All_Mouthes_XY
 
 
 def getHeadAndTailRect(erodedpadding, imagename, IfStore=False):
