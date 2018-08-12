@@ -28,17 +28,17 @@ def ChooseSource(FromVideo = False, FromImage = False):
             if len(frames) == 200:
                 break
 
-        fram = frames[100]
+        fram = frames[111]
         imgColor = cv2.cvtColor(fram, cv2.IMREAD_COLOR)
         img = cv2.cvtColor(fram, cv2.COLOR_BGR2GRAY)
         imagename = 'Frame' + str(i)
     return imgColor, img, imagename
 
-imgColor, img, imagename = ChooseSource(FromVideo=True, FromImage=False)
+imgColor, img, imagename = ChooseSource(FromVideo=False, FromImage=True)
 
 # grayprocess, erode using kernel
-retval, im_at_fixed = cv2.threshold(img, 60, 255, cv2.THRESH_BINARY_INV)# for video, the weo paras are 60/30, for image, they are 110/60
-retval2, im_at_fixedOverGrey = cv2.threshold(img, 30, 255, cv2.THRESH_BINARY_INV)
+retval, im_at_fixed = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY_INV)# for video, the weo paras are 60/30, for image, they are 110/60
+retval2, im_at_fixedOverGrey = cv2.threshold(img, 60, 255, cv2.THRESH_BINARY_INV)
 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))  # errosion for remove legs
 eroded = cv2.erode(im_at_fixed, kernel)
 # padding 0

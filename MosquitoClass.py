@@ -188,6 +188,7 @@ def gt_FliteredMouthes(soloimgShape, points, pointstoshow):
     PointsY = points[:, 1]
     for i in range(0, len(pointstoshow)):
         img[PointsX[pointstoshow[i]]][PointsY[pointstoshow[i]]] = 255
+    img = np.int8(img, dtype=np.uint8)
     return img
 
 def dbscanFromIMG(img, eps, min_samples):
@@ -471,8 +472,8 @@ def HoughCircles(img, IfPlay = False):
     img = cv2.medianBlur(img, 5)
     cimg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
-    circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 2, 35,
-                               param1=20, param2=8, minRadius=5, maxRadius=13)
+    circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 3, 40,
+                               param1=10, param2=25, minRadius=6, maxRadius=13)
     if circles is not None:
         circles = np.uint16(np.around(circles))
         print('Potential Head detected, position: ' + 'X:' +  str(circles[0][0][1]) + ', Y:' + str(circles[0][0][2]) + '\n')
@@ -494,12 +495,14 @@ def plotTheFeatures(imgColor, CirclesOfAllMos, rectlist, rectForSoloImg, NoisyPo
         ## draw Heads Circles
         if CirclesOfAllMos[str(mos)] is not None:
             for c in range(0, len(CirclesOfAllMos[str(mos)][0])):
-                c = 0 # Only use the first circle detected
+                #c = 0 # Only use the first circle detected
                 CircleCentX = CirclesOfAllMos[str(mos)][0][c][1] + rectlist[2 * mos + 1][0]
                 CircleCentY = CirclesOfAllMos[str(mos)][0][c][0] + rectlist[2 * mos + 1][1]
                 Radius = CirclesOfAllMos[str(mos)][0][c][2]
                 rr, cc = draw.circle(CircleCentX, CircleCentY, Radius)
                 draw.set_color(imgColor, [rr, cc], [0, 255, 200])
+        cv2.rectangle(imgColor, (rectForSoloImg[mos][1], rectForSoloImg[mos][0]), (rectForSoloImg[mos][3], rectForSoloImg[mos][2]), (0,150,150),2)
+        cv2.rectangle(imgColor, (rectlist[2*mos+1][1], rectlist[2*mos+1][0]), (rectlist[2*mos+1][3], rectlist[2*mos+1][2]), (150,0,150), 2)
         ## draw Heads and Tails Rects
         HeadRectStart = [rectlist[2 * mos + 1][0], rectlist[2 * mos + 1][1]]
         HeadRectExtent = [rectlist[2 * mos + 1][2], rectlist[2 * mos + 1][3]]
