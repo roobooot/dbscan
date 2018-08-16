@@ -12,23 +12,24 @@ def ChooseSource(FromVideo = False, FromImage = False):
     if FromImage:
         datapath = r'C:\Users\Zed_Luz\OneDrive\3-MEE\18-JHU\12-Work\5-MosquitoRecog\7-data\train'
         imglist = os.listdir(datapath)
-        imagename = imglist[276]
+        imagename = imglist[21]
         imgpath = os.path.join(datapath, imagename)
         imgColor = cv2.imread(imgpath, cv2.IMREAD_COLOR)
         img = cv2.imread(imgpath, cv2.IMREAD_GRAYSCALE)
     if FromVideo:
-        capture = cv2.VideoCapture('ms_test4.mp4')
+        capture = cv2.VideoCapture('ms_test3.mp4')
         i = -1
         frames = dict()
         while True:
             ret, rawfram = capture.read()
             i = i + 1
+            if rawfram is None:
+                break
             frames[i] = rawfram
             print('This is Frame' + str(i) + '\n')
-            if len(frames) == 200:
-                break
 
-        fram = frames[111]
+
+        fram = frames[21]
         imgColor = cv2.cvtColor(fram, cv2.IMREAD_COLOR)
         img = cv2.cvtColor(fram, cv2.COLOR_BGR2GRAY)
         imagename = 'Frame' + str(i)
